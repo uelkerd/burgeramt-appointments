@@ -90,7 +90,39 @@ async def parse_appointment_dates(page: Page) -> list[datetime]:
     return appointment_dates
 
 
-async def look_for_appointments(browser: Browser, appointments_url: str, email: str, script_id: str, quiet: bool) -> dict[str, Any]:
+def _handle_appointment_error(
+    error_type: str,
+    err: Exception,
+    quiet: bool,
+    status_code: int,
+    log_level: int = logging.WARNING
+) -> dict[str, Any]:
+    """Helper to handle common error reporting for look_for_appointments."""
+    message = f'Could not fetch results from Berlin.de. - {str(err)}'
+    if error_type == "unexpected":
+        logger.exception("Unexpected error.")
+    elif error_type == "playwright_timeout":
+        logger.exception(f"Element selection timeout. Checking in {refresh_delay} seconds")
+    else:
+        logger.log(log_level, f"{str(err)}. Checking in {refresh_delay} seconds")
+
+    if not quiet:
+        chime.error()
+    return {
+        'time': datetime_to_json(datetime.now()),
+        'status': status_code,
+        'message': message if error_type != "unexpected" else f'Could not find appointments. - {str(err)}',
+        'appointmentDates': [],
+    }
+
+
+async def look_for_appointments(
+    browser: Browser,
+    appointments_url: str,
+    email: str,
+    script_id: str,
+    quiet: bool
+) -> dict[str, Any]:
     """
     Look for appointments, return a response dict
     """
@@ -106,52 +138,19 @@ async def look_for_appointments(browser: Browser, appointments_url: str, email: 
             'appointmentDates': [datetime_to_json(d) for d in appointments],
         }
     except HTTPError as err:
-        logger.warning(f"{str(err)}. Checking in {refresh_delay} seconds")
-        if not quiet:
-            chime.error()
-        return {
-            'time': datetime_to_json(datetime.now()),
-            'status': 502,
-            'message': f'Could not fetch results from Berlin.de - {str(err)}',
-            'appointmentDates': [],
-        }
+        return _handle_appointment_error("http", err, quiet, 502)
     except TimeoutError as err:
-        logger.warning(f"{str(err)}. Checking in {refresh_delay} seconds")
-        if not quiet:
-            chime.error()
-        return {
-            'time': datetime_to_json(datetime.now()),
-            'status': 504,
-            'message': f'Could not fetch results from Berlin.de. - {str(err)}',
-            'appointmentDates': [],
-        }
+        return _handle_appointment_error("timeout", err, quiet, 504)
     except PlaywrightTimeoutError as err:
-        logger.exception(f"Element selection timeout. Checking in {refresh_delay} seconds")
-        if not quiet:
-            chime.error()
-        return {
-            'time': datetime_to_json(datetime.now()),
-            'status': 504,
-            'message': f'Could not fetch results from Berlin.de. - {str(err)}',
-            'appointmentDates': [],
-        }
+        return _handle_appointment_error("playwright_timeout", err, quiet, 504)
     except Exception as err:
-        logger.exception("Unexpected error.")
-        if not quiet:
-            chime.error()
-        return {
-            'time': datetime_to_json(datetime.now()),
-            'status': 500,
-            'message': f'Could not find appointments. - {str(err)}',
-            'appointmentDates': [],
-        }
+        return _handle_appointment_error("unexpected", err, quiet, 500)
 
 
 async def on_connect(client) -> None:
     """
     When a client connects via websockets, send them the latest results
     """
-    global last_message
     connected_clients.append(client)
     try:
         await client.send(json.dumps(last_message))
