@@ -5,11 +5,13 @@ import asyncio
 import chime
 import json
 import logging
+import os # Moved from inside
 import pytz
 import websockets
+import argparse # Moved from inside
 
 
-logger = logging.getLogger()
+logger = logging = logging.getLogger()
 
 chime.theme('material')
 
@@ -29,19 +31,19 @@ class HTTPError(Exception):
 def datetime_to_json(datetime_obj: datetime) -> str:
     return datetime_obj.strftime('%Y-%m-%dT%H:%M:%SZ')
 
+
 def ask_question(question: str, instructions: str) -> str:
     print(f"\033[1m{question}\033[0m")
     if instructions:
         print(instructions)
     return input("> \033[0m")
 
-import argparse
-import os
 
 def main():
     parser = argparse.ArgumentParser(
         prog='appointments',
-        description='Finds Bürgeramt and other office appointments in Berlin',
+        description='Finds Bürgeramt and other office appointments in Berlin. '
+                    'Also broadcasts them via websockets.',
         epilog='Made with ❤️ in Berlin'
     )
     parser.add_argument(
