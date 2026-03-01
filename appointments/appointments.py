@@ -151,7 +151,6 @@ async def on_connect(client) -> None:
     """
     When a client connects via websockets, send them the latest results
     """
-    global last_message
     connected_clients.append(client)
     try:
         await client.send(json.dumps(last_message))
