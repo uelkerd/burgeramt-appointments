@@ -5,13 +5,13 @@ import asyncio
 import chime
 import json
 import logging
-import os # Moved from inside
+import os  # Moved from inside
 import pytz
 import websockets
-import argparse # Moved from inside
+import argparse  # Moved from inside
 
 
-logger = logging = logging.getLogger()
+logger = logging.getLogger()
 
 chime.theme('material')
 
@@ -75,7 +75,8 @@ def main():
 
     service_page_url = args.url or ask_question(
         "What is URL of the service you want to watch?",
-        "This is service.berlin.de page for the service you want an appointment for. For example, \"https://service.berlin.de/dienstleistung/120686/\""
+        ("This is service.berlin.de page for the service you want an appointment for. "
+         "For example, \"https://service.berlin.de/dienstleistung/120686/\"")
     )
 
     email = args.email or ask_question(
