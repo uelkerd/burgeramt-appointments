@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "berlin-appointment-finder"
+version = "2.0.0"
+description = "Finds appointments at the Berlin Bürgeramt, broadcasts them via websockets"
+readme = "README.md"
+authors = [
+  { name = "Nicolas Bouliane", email = "contact@nicolasbouliane.com" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "chime==0.7.0",
+    "playwright==1.55.0",
+    "pytz",
+    "websockets==14.2",
+]
+
+[project.urls]
+Documentation = "https://github.com/All-About-Berlin/burgeramt-appointments"
+Funding = "https://allaboutberlin.com/donate"
+"Source Code" = "https://github.com/All-About-Berlin/burgeramt-appointments"
+Issues = "https://github.com/All-About-Berlin/burgeramt-appointments/issues"
+
+[tool.setuptools]
+packages = ["appointments"]
+script-files = ["bin/appointments"]
