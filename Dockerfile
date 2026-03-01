@@ -5,8 +5,9 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
 
 WORKDIR /var/appointments
 
-# Copy only dependency metadata first to leverage Docker layer caching
-COPY setup.py README.md ./
+# Copy only dependency metadata first to leverage Docker layer caching.
+# We use wildcards so it works whether setup.py or pyproject.toml exists.
+COPY setup.p[y] pyproject.tom[l] README.md ./
 # Also copy the appointments module structure since setup.py's find_packages() needs it
 COPY appointments/ ./appointments/
 
