@@ -90,7 +90,6 @@ async def parse_appointment_dates(page: Page) -> list[datetime]:
     return appointment_dates
 
 
-
 def _handle_appointment_error(
     error_type: str,
     err: Exception,
@@ -115,6 +114,7 @@ def _handle_appointment_error(
         'message': message if error_type != "unexpected" else f'Could not find appointments. - {str(err)}',
         'appointmentDates': [],
     }
+
 
 async def look_for_appointments(
     browser: Browser,
@@ -145,7 +145,6 @@ async def look_for_appointments(
         return _handle_appointment_error("playwright_timeout", err, quiet, 504)
     except Exception as err:
         return _handle_appointment_error("unexpected", err, quiet, 500)
-
 
 
 async def on_connect(client) -> None:
