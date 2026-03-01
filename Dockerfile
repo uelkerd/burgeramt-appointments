@@ -5,7 +5,7 @@ FROM python:3.10.13-slim-bookworm
 # This ensures it can be accessed by any user in the container
 ENV PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
 
-WORKDIR /var/appointments
+WORKDIR /app
 
 # Copy only dependency metadata first to leverage Docker layer caching.
 # We use wildcards so it works whether setup.py or pyproject.toml exists.
@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir . && \
 COPY . .
 
 # Create a non-root user to run the application for better security, and fix permissions
-RUN useradd -m appuser && chown -R appuser:appuser /var/appointments /opt/pw-browsers
+RUN useradd -m appuser && chown -R appuser:appuser /app /opt/pw-browsers
 
 USER appuser
 
