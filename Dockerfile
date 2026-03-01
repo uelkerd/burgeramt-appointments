@@ -24,3 +24,4 @@ RUN useradd -m appuser && chown -R appuser:appuser /var/appointments /opt/pw-bro
 USER appuser
 
 CMD ["appointments", "-q"]
+
