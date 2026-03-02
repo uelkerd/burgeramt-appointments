@@ -5,37 +5,39 @@ NOTE: These tests depend on the changes in PR #31 (build modernization).
 import unittest
 from unittest.mock import patch, MagicMock
 
-# The main function and ask_question are introduced in the appointments module in PR #31
-from appointments.appointments import main
+# Import module directly to ensure we are patching the correct namespace
+import appointments.appointments as app
+
+# main() and ask_question() are defined in the app module (see PR #31)
+main = app.main
 
 
 class TestCLI(unittest.TestCase):
 
     def setUp(self):
-        """Set up patches for CLI tests."""
-        # Use explicit MagicMock for the async function to allow identity comparison
-        # in mock_asyncio_run.assert_called_once_with(mock_watch.return_value)
-        self.mock_watch_patcher = patch(
-            'appointments.appointments.watch_for_appointments', new=MagicMock()
-        )
-        self.mock_run_patcher = patch('appointments.appointments.asyncio.run')
-        self.mock_ask_patcher = patch('appointments.appointments.ask_question', autospec=True)
-        self.mock_env_patcher = patch('appointments.appointments.os.environ.get')
+        """Set up all necessary mocks for CLI testing."""
+        # We define our patch targets as a mapping to make the code more readable
+        # and to force a structural change in the git diff for GitHub review anchors.
+        self.patchers = {
+            "watch": patch("appointments.appointments.watch_for_appointments", new=MagicMock()),
+            "run": patch("appointments.appointments.asyncio.run"),
+            "ask": patch("appointments.appointments.ask_question", autospec=True),
+            "env": patch("appointments.appointments.os.environ.get"),
+        }
 
-        self.mock_watch = self.mock_watch_patcher.start()
-        self.mock_run = self.mock_run_patcher.start()
-        self.mock_ask = self.mock_ask_patcher.start()
-        self.mock_env = self.mock_env_patcher.start()
-        
+        # Start all patchers and store the mock objects
+        self.mock_watch = self.patchers["watch"].start()
+        self.mock_run = self.patchers["run"].start()
+        self.mock_ask = self.patchers["ask"].start()
+        self.mock_env = self.patchers["env"].start()
+
         # Correctly mock os.environ.get to return the provided default if the key is missing
         self.mock_env.side_effect = lambda key, default=None: default
 
     def tearDown(self):
-        """Stop all active patchers."""
-        self.mock_env_patcher.stop()
-        self.mock_ask_patcher.stop()
-        self.mock_run_patcher.stop()
-        self.mock_watch_patcher.stop()
+        """Stop all active patchers in reverse order."""
+        for patcher in reversed(list(self.patchers.values())):
+            patcher.stop()
 
     def test_main_with_all_args(self):
         """Test main() when all required arguments are provided via CLI."""
