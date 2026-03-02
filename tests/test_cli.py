@@ -1,13 +1,18 @@
+"""
+Unit tests for the burgeramt-appointments CLI entry point.
+NOTE: These tests depend on the changes in PR #31 (build modernization).
+"""
 import unittest
 from unittest.mock import patch, MagicMock
 
-# Assume the main function is now in appointments.appointments
+# The main function and ask_question are introduced in the appointments module in PR #31
 from appointments.appointments import main
 
 
 class TestCLI(unittest.TestCase):
 
     def setUp(self):
+        """Set up patches for CLI tests."""
         # Use explicit MagicMock for the async function to allow identity comparison
         # in mock_asyncio_run.assert_called_once_with(mock_watch.return_value)
         self.mock_watch_patcher = patch(
@@ -21,16 +26,19 @@ class TestCLI(unittest.TestCase):
         self.mock_run = self.mock_run_patcher.start()
         self.mock_ask = self.mock_ask_patcher.start()
         self.mock_env = self.mock_env_patcher.start()
-        # Default os.environ.get to return None so defaults work as expected
-        self.mock_env.return_value = None
+        
+        # Correctly mock os.environ.get to return the provided default if the key is missing
+        self.mock_env.side_effect = lambda key, default=None: default
 
     def tearDown(self):
-        self.mock_watch_patcher.stop()
-        self.mock_run_patcher.stop()
-        self.mock_ask_patcher.stop()
+        """Stop all active patchers."""
         self.mock_env_patcher.stop()
+        self.mock_ask_patcher.stop()
+        self.mock_run_patcher.stop()
+        self.mock_watch_patcher.stop()
 
     def test_main_with_all_args(self):
+        """Test main() when all required arguments are provided via CLI."""
         test_argv = [
             'appointments', '--id', 'test-id', '--email', 'test@example.com',
             '--url', 'https://service.berlin.de/test/', '--quiet', '--port', '8080'
@@ -47,6 +55,7 @@ class TestCLI(unittest.TestCase):
         self.mock_run.assert_called_once_with(self.mock_watch.return_value)
 
     def test_main_with_missing_args_uses_ask_question(self):
+        """Test main() fallback to interactive questions when CLI args are missing."""
         # Simulate missing URL and email, which should trigger ask_question
         self.mock_ask.side_effect = ["https://service.berlin.de/asked/", "asked@example.com"]
 
@@ -61,6 +70,7 @@ class TestCLI(unittest.TestCase):
         self.mock_run.assert_called_once_with(self.mock_watch.return_value)
 
     def test_main_with_env_vars(self):
+        """Test main() fallback to environment variables when CLI args are missing."""
         # Simulate arguments coming from environment variables
         env_vars = {
             'BOOKING_TOOL_ID': 'env-id',
@@ -81,6 +91,7 @@ class TestCLI(unittest.TestCase):
         self.mock_run.assert_called_once_with(self.mock_watch.return_value)
 
     def test_main_argument_precedence(self):
+        """Test that CLI arguments take precedence over environment variables."""
         # CLI args should take precedence over env vars
         env_vars = {
             'BOOKING_TOOL_ID': 'env-id',
