@@ -32,5 +32,5 @@ Funding = "https://allaboutberlin.com/donate"
 [project.scripts]
 appointments = "appointments.appointments:main"
 
-[tool.setuptools.packages]
-find = {} # Automatic package discovery
+[tool.setuptools.packages.find]
+# Automatic package discovery

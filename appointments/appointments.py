@@ -40,6 +40,19 @@ def ask_question(question: str, instructions: str) -> str:
 
 
 def main():
+    logging.basicConfig(
+        datefmt='%Y-%m-%d %H:%M:%S',
+        format='[%(asctime)s] %(levelname)s: %(message)s',
+        level=logging.INFO
+    )
+
+    port_env = os.environ.get('BOOKING_TOOL_PORT')
+    try:
+        default_port = int(port_env) if port_env is not None else 80
+    except ValueError:
+        logger.warning("Invalid BOOKING_TOOL_PORT value %r; falling back to 80", port_env)
+        default_port = 80
+
     parser = argparse.ArgumentParser(
         prog='appointments',
         description='Finds Bürgeramt and other office appointments in Berlin. '
@@ -69,13 +82,16 @@ def main():
     parser.add_argument(
         '-p', '--port', type=int,
         help="Expose a websockets server on that port. Allows other software to listen for new appointments.",
-        default=os.environ.get('BOOKING_TOOL_PORT', 80)
+        default=default_port
     )
     args = parser.parse_args()
 
+    if args.quiet:
+        logging.getLogger().setLevel(logging.WARNING)
+
     service_page_url = args.url or ask_question(
-        "What is URL of the service you want to watch?",
-        ("This is service.berlin.de page for the service you want an appointment for. "
+        "What is the URL of the service you want to watch?",
+        ("This is the service.berlin.de page for the service you want an appointment for. "
          "For example, \"https://service.berlin.de/dienstleistung/120686/\"")
     )
 
